@@ -8,9 +8,10 @@ public class PlayerController : MonoBehaviour
 
     private bool isMoving = false;
     private Vector2 input;
+    private Animator animator;
 
-    void Start() {
-        
+    void Awake() {
+        animator = GetComponent<Animator>();
     }
 
     void Update() {
@@ -18,11 +19,30 @@ public class PlayerController : MonoBehaviour
             input = new Vector2(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
             if (input != Vector2.zero) {
                 input.y = input.x != 0 ? 0 : input.y; // restrain diagonal movement
+                animator.SetFloat("moveX", input.x);
+                animator.SetFloat("moveY", input.y);
+
                 Vector3 targetPos = transform.position;
                 targetPos.x += input.x;
                 targetPos.y += input.y;
 
-                StartCoroutine(Move(targetPos));
+
+                if (isWalkable(targetPos)) {
+                    StartCoroutine(Move(targetPos));
+                }
+            }
+        }
+        animator.SetBool("isMoving", isMoving);
+    }
+
+    private bool isWalkable(Vector3 targetPos) {
+        return Physics2D.OverlapCircle(targetPos, 0.2f, LayerMask.GetMask("SolidObjects")) == null;
+    }
+
+    private void CheckForEncounter() {
+        if (Physics2D.OverlapCircle(transform.position, 0.2f, LayerMask.GetMask("Grass")) != null) {
+            if (Random.Range(1,101) <= 10) {
+                Debug.Log("Encounter started");
             }
         }
     }
@@ -35,5 +55,6 @@ public class PlayerController : MonoBehaviour
         }
         transform.position = targetPos;
         isMoving = false;
+        CheckForEncounter();
     }
 }
